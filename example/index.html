@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <script>
+    var ws = null;
+    function connect(){
+      if (ws && ws.readyState === 1) {
+        console.log('ws is opened');
+        return ;
+      }
+
+      ws = new WebSocket('ws://'+window.location.host+'/Demo');
+
+      ws.onopen    = function (e) {
+        console.log('onopen ...,will send ...');
+      };
+
+      ws.onclose   = function (e) {
+        console.log('closed ...');
+      };
+
+      ws.onmessage = function (e) {
+        console.log('onmessage',e.data);
+      };
+
+      ws.onerror   = function (e) {
+        console.log(e);
+      };
+    }
+
+    function sendString () {
+      console.log('sendString');
+      ws.send('hello world');
+    }
+
+    function sendBinary () {
+      console.log('sendBinary');
+      ws.send(new Blob());
+    }
+
+    function sendLongString () {
+      console.log(sendLongString);
+      var longString = '' ;
+      for(var a = 0 ; a < 65535; a++ ){
+        longString += '1111111111'
+      }
+      ws.send(longString);
+    }
+
+    function end(){
+      console.log('end connection');
+      ws.close(1000);
+    }
+  </script>
+</head>
+<body>
+  <button onclick="connect()">connect</button>
+  <button onclick="sendString()">sendString</button>
+  <button onclick="sendBinary()">sendBinary</button>
+  <button onclick="sendLongString()">sendLongString</button>
+  <button onclick="end()">end</button>
+  <div>hello world!</div>
+</body>
+</html>
