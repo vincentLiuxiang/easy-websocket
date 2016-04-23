@@ -116,7 +116,6 @@ defalut config:
 
 ```
 {
- pingTimer:null,
  pingInterval:10000,
  enablePing:true,
  enablePong:true
