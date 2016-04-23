@@ -12,6 +12,33 @@ var websocket = require('easy-websocket');
 #### example 
 ##### server
 
+
+
+```
+var http      = require('http');
+var fs        = require('fs');
+var websocket = require('../index');
+var app = http.createServer(function (req,res) {
+  fs.readFile('./index.html',function (err,data) {
+    res.end(data)
+  })
+});
+var ws = WebSocket(app)
+          .on('data',function (obj) {
+            console.log(obj.type,obj.buffer.length);
+          })
+          .on('pong',function (text) {
+            console.log('pong ...',text);
+          });
+/*
+var ws = WebSocket(server);
+ws.on('data',(obj) => {
+  console.log(obj.type,obj.buffer.length);
+  ws.send('hello world');
+});
+*/
+```
+
 `http`   [path]/example/http-example.js
 
 ```
