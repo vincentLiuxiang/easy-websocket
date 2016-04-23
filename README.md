@@ -13,6 +13,7 @@ var websocket = require('easy-websocket');
 ##### server
 
 
+`http`
 
 ```
 var http      = require('http');
@@ -102,7 +103,14 @@ app.use(function (req,res,next) {
 
 var server = http.Server(app);
 
-// websocket
+
+var ws = websocket(server);
+ws.on('data',(obj) => {
+  console.log(obj.type,obj.buffer.length);
+  ws.send('hello world');
+});
+
+/*
 server.on('upgrade',function (req,socket,head) {
   var ws = websocket(socket)
     .shakeHand(req)
@@ -120,12 +128,14 @@ server.on('upgrade',function (req,socket,head) {
       //
     });
 })
+*/
 
 server.listen(3000);
 
 ```
 
 ```
+ var websocket = require('easy-websocket');
  var ws = websocket(socket);
  ws.shakeHand(req);
  ws.receiveFrame();
@@ -137,7 +147,19 @@ server.listen(3000);
 
 ## api
 
-#### 1, new websocket(socket[,config]);
+#### 1, websocket
+##### 1.1 new websocket(server[,config]);
+server: instance of http.Server;
+
+```
+var websocket = require('easy-websocket');
+var server = http.Server();
+//var server = http.createServer();
+var ws = new websocket(server);
+ws.on('data',() => {
+})
+//...
+```
 config: optional , json object;
 defalut config:
 
@@ -147,6 +169,30 @@ defalut config:
  enablePing:true,
  enablePong:true
 }
+```
+#### 1.2 new websocket(socket[,config]);
+* socket.
+* config: refer to 1.1.
+
+```
+var websocket = require('easy-websocket');
+server.on('upgrade',function (req,socket,head) {
+  var ws = websocket(socket)
+    .shakeHand(req)
+    .receiveFrame()
+    .on('data',function(obj){
+      console.log(obj.type,obj.buffer.length);
+      switch(obj.type) {
+        case 'string':
+          ws.send(obj.buffer.toString());
+        break;
+        case 'binary':
+          ws.send(obj.buffer,'binary');
+        break;
+      }
+      //
+    });
+})
 ```
 #### 2, shakeHand(req);
 req: http request from client to server;

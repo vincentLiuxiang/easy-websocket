@@ -6,6 +6,13 @@ var app = http.createServer(function (req,res) {
     res.end(data)
   })
 });
+// var ws = websocket(app)
+//           .on('data',function (obj) {
+//             console.log(obj.type,obj.buffer.length);
+//           })
+//           .on('pong',function (text) {
+//             console.log('pong ...',text);
+//           })
 
 // websocket
 app.on('upgrade',function (req,socket,head) {
