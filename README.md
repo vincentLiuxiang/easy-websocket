@@ -32,7 +32,7 @@ var ws = WebSocket(app)
             console.log('pong ...',text);
           });
 /*
-var ws = WebSocket(server);
+var ws = WebSocket(app);
 ws.on('data',(obj) => {
   console.log(obj.type,obj.buffer.length);
   ws.send('hello world');
