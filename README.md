@@ -10,8 +10,9 @@ var websocket = require('easy-websocket');
 ```
 
 #### example 
+##### browser client
+[index.html](https://github.com/vincentLiuxiang/easy-websocket/blob/master/example/index.html)
 ##### server
-
 
 `http`
 
