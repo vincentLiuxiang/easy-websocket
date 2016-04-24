@@ -12,6 +12,33 @@ var websocket = require('easy-websocket');
 #### example 
 ##### browser client
 [index.html](https://github.com/vincentLiuxiang/easy-websocket/blob/master/example/index.html)
+
+```
+  ws = new WebSocket('ws://'+window.location.host+'/Demo');
+  
+  ws.onopen = function (e) {
+    console.log('onopen ...,will send ...');
+    ws.send('hello world);
+  };
+
+  ws.onclose = function (e) {
+    console.log('closed ...');
+  };
+
+  ws.onmessage = function (e) {
+    console.log('onmessage',e.data);
+  };
+
+  ws.onerror   = function (e) {
+    console.log(e);
+  };
+  
+  ...
+
+  ws.send(...);
+  ws.close(1000);
+```
+
 ##### server
 
 `http`
@@ -25,15 +52,15 @@ var app = http.createServer(function (req,res) {
     res.end(data)
   })
 });
-var ws = WebSocket(app)
+var ws = websocket(app)
           .on('data',function (obj) {
             console.log(obj.type,obj.buffer.length);
           })
           .on('pong',function (text) {
             console.log('pong ...',text);
-          });
+          })
 /*
-var ws = WebSocket(app);
+var ws = websocket(app);
 ws.on('data',(obj) => {
   console.log(obj.type,obj.buffer.length);
   ws.send('hello world');
