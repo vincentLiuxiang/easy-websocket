@@ -1,4 +1,4 @@
-var app       = require('connect')();
+var app       = require('express')();
 var http      = require('http');
 var fs        = require('fs');
 var websocket = require('../index');
