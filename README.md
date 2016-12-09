@@ -1,5 +1,7 @@
 ### easy-websocket for node
 
+[![Build Status](https://travis-ci.org/vincentLiuxiang/easy-websocket.svg?branch=master)](https://travis-ci.org/vincentLiuxiang/easy-websocket) [![Coverage Status](https://coveralls.io/repos/github/vincentLiuxiang/easy-websocket/badge.svg?branch=master)](https://coveralls.io/github/vincentLiuxiang/easy-websocket?branch=master)
+
 (The MIT License)
 
 ## install
