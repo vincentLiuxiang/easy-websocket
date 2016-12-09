@@ -1,10 +1,11 @@
 {
   "name": "easy-websocket",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "easy websocket",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/ava/cli.js",
+    "test-cov": "./node_modules/nyc/bin/nyc.js --reporter=lcov npm test"
   },
   "keywords": [
     "websocket",
@@ -20,5 +21,9 @@
   "bugs": {
     "url": "https://github.com/vincentLiuxiang/easy-websocket/issues"
   },
-  "homepage": "https://github.com/vincentLiuxiang/easy-websocket#readme"
+  "homepage": "https://github.com/vincentLiuxiang/easy-websocket#readme",
+  "devDependencies": {
+    "ava": "^0.17.0",
+    "nyc": "^10.0.0"
+  }
 }
