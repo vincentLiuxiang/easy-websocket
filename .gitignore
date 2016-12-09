@@ -1,4 +1,4 @@
-_Store
+.DS_Store
 .idea
 node_modules
 npm-debug.log
@@ -6,3 +6,5 @@ dist
 out
 logs
 log
+.nyc_output/
+coverage/
