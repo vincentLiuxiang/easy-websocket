@@ -181,7 +181,7 @@ test.serial.cb('Server recv/send 2 bytes len data', (t) => {
 
 test.serial.cb('Server recv/send 8 bytes len data', (t) => {
   t.plan(2)
-  var len = Math.round((1+Math.random()) * 655360 + 0.5)
+  var len = Math.round((1+Math.random()) * 6055360 + 0.5)
   var buf = new Buffer(8)
   buf.writeUIntBE(len,0,8)
   var tmp = new Buffer(len)
