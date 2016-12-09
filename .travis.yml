@@ -1,0 +1,10 @@
+node_js:
+- "0.10"
+- "0.12"
+- "4"
+- "6"
+- "7"
+
+language: node_js
+script: "npm install && npm run test-cov"
+after_script: "npm install coveralls@2 && cat ./coverage/lcov.info | coveralls"

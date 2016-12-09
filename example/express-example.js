@@ -3,10 +3,6 @@ var http      = require('http');
 var fs        = require('fs');
 var websocket = require('../index');
 
-// app.use(...)
-// app.use(...)
-// app.use(...)
-
 app.use(function (req,res,next) {
   console.log(req.url);
   next();

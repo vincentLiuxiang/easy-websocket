@@ -3,10 +3,6 @@ var http      = require('http');
 var fs        = require('fs');
 var websocket = require('../index');
 
-// app.use(...)
-// app.use(...)
-// app.use(...)
-
 app.use(function (req,res,next) {
   console.log(req.url);
   next();
@@ -30,23 +26,5 @@ var ws = websocket(server)
   .on('pong',function (text) {
     console.log('pong ...',text);
   })
-
-// websocket
-// server.on('upgrade',function (req,socket,head) {
-//   var ws = websocket(socket)
-//     .shakeHand(req)
-//     .receiveFrame()
-//     .on('data',function(obj){
-//       console.log(obj.type,obj.buffer.length);
-//       switch(obj.type) {
-//         case 'string':
-//           ws.send(obj.buffer.toString());
-//         break;
-//         case 'binary':
-//           ws.send(obj.buffer,'binary');
-//         break;
-//       }
-//     });
-// })
 
 server.listen(3000);
