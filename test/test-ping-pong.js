@@ -64,15 +64,18 @@ test.serial.cb('Server ping Client Pong', (t) => {
     pingInterval:1000
   })
 
-  ws.on('pong',(data) => {
-    if (data.length ===  1 && data[0] === 0x49 ^ 0xed) {
-      t.pass()
-    } else {
-      t.fail()
-    }
-    t.end()
-    ws.end()
+  ws.on('connect',(websocket) => {
+    websocket.on('pong',(data) => {
+      if (data.length ===  1 && data[0] === 0x49 ^ 0xed) {
+        t.pass()
+      } else {
+        t.fail()
+      }
+      t.end()
+      websocket.end()
+    })
   })
+  
 
   var flag = false
   var client = net.connect({ port:port })
@@ -102,12 +105,16 @@ test.serial.cb('Client ping Server pong', (t) => {
     pingInterval:1000,
     enablePing:false // close sever ping
   })
-  ws.on('ping',(data) => {
-    if (data.length === tmp.length) {
-      t.pass()
-    } else {
-      t.fail()
-    }
+  var wss;
+  ws.on('connect',(websocket) => {
+    wss = websocket
+    websocket.on('ping',(data) => {
+      if (data.length === tmp.length) {
+        t.pass()
+      } else {
+        t.fail()
+      }
+    })
   })
 
   var client = net.connect({ port:port })
@@ -120,7 +127,7 @@ test.serial.cb('Client ping Server pong', (t) => {
         t.fail()
       }
       t.end()
-      ws.end()
+      wss.end()
       return 
     }
     pong = true
@@ -139,13 +146,19 @@ test.serial.cb('Client ping disable Server pong', (t) => {
     enablePong: false,
     enablePing:false
   })
-  ws.on('ping',(data) => {
-    if (data.length === tmp.length) {
-      t.pass()
-    } else {
-      t.fail()
-    }
+  var wss;
+  ws.on('connect',(websocket) => {
+    wss = websocket
+    
+    websocket.on('ping',(data) => {
+      if (data.length === tmp.length) {
+        t.pass()
+      } else {
+        t.fail()
+      }
+    })
   })
+  
 
   var pong = false
   var client = net.connect({ port:port })
@@ -159,7 +172,7 @@ test.serial.cb('Client ping disable Server pong', (t) => {
       }
       clearTimeout(timer)
       t.end()
-      ws.end()
+      wss.end()
       return
     }
     pong = true;
@@ -169,7 +182,7 @@ test.serial.cb('Client ping disable Server pong', (t) => {
     var timer = setTimeout(() => {
       t.pass()
       t.end()
-      ws.end()
+      wss.end()
     },2000)
   })
 })

@@ -1,4 +1,3 @@
-var http         = require('http');
 var util         = require('./util');
 var EventEmitter = require('events').EventEmitter;
 var MAGIC_STRING = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
@@ -13,6 +12,7 @@ var WebSocket = function (socket,config) {
   this.payLoadLen    = null;
   this.start         = 6;
   this.isSameFrame   = false;
+  this.waitContinual = false;
   this.config        = Object.assign({
     pingTimer:null,
     pingInterval:10000,
@@ -69,6 +69,7 @@ WebSocket.prototype.shakeHand = function (req) {
     '\r\n'
   );
 
+  this.emit('connect',this);
   return this;
 }
 
@@ -91,19 +92,6 @@ WebSocket.prototype.receiveFrame = function () {
     this.startPing();
   }
 
-  return this;
-}
-
-WebSocket.prototype.onUpgrade = function () {
-  if (!(this.socket instanceof http.Server)) {
-    return this;
-  }
-  var server = this.socket;
-  var self = this;
-  server.on('upgrade', function (req,socket,head) {
-    self.socket = socket;
-    self.shakeHand(req).receiveFrame();
-  });
   return this;
 }
 
@@ -158,10 +146,14 @@ WebSocket.prototype.code = function() {
 
   this.FIN         = firstByte >> 7;
   this.RSV         = firstByte & 0x70;
-  this.opcode      = firstByte & 0x0f;
   this.hasMask     = secondByte >> 7;
   this.payLoadLen  = secondByte & 0x7f;
   this.start       = 6;
+
+  if (!this.waitContinual) {
+    this.opcode = firstByte & 0x0f;    
+  }
+
   if (this.RSV) {
     return new Error('RSV1/2/3 must be 0');
   }
@@ -236,11 +228,16 @@ WebSocket.prototype.decodeFrame = function () {
   // Handle the !FIN frame
   if (!this.FIN) {
     var self = this;
+    // FIN === 0, wait for More Continue Frame
+    this.waitContinual = true;
     setImmediate(function () {
       self.decodeFrame()
     })
     return
   }
+
+  // FIN === 1, no More Continue Frame
+  this.waitContinual = false;
   // Last frame accepted
   this.proccessFrame();
 }
@@ -308,6 +305,5 @@ WebSocket.prototype.error = function (error) {
 }
 
 module.exports = function (socket,config) {
-  return new WebSocket(socket,config).onUpgrade();
+  return new WebSocket(socket,config);
 }
-
