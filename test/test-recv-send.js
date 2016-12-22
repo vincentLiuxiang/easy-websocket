@@ -60,15 +60,17 @@ test.afterEach.cb((t) => {
 
 test.serial.cb('Server send Type', (t) => {
   var ws = WebSocket(server)
-  ws.on('data',(obj) => {
-    try {
-      ws.send("hello world",'error-type')
-      t.fail()
-    } catch(e) {
-      t.pass()
-    }
-    ws.end()
-    t.end()
+  ws.on('connect',(websocket) => {
+    websocket.on('data',(obj) => {
+      try {
+        ws.send("hello world",'error-type')
+        t.fail()
+      } catch(e) {
+        t.pass()
+      }
+      websocket.end()
+      t.end()
+    })
   })
   var flag = false
   var client = net.connect({ port:port })
@@ -86,9 +88,14 @@ function sendText(t,text) {
   var len = Math.round(Math.random()*30+0.5)
   var str = Math.random().toString(35).substr(2, len)
   var ws = WebSocket(server)
-  ws.on('data',(obj) => {
-    ws.send(str,text)
+  var wss
+  ws.on('connect',(websocket) => {
+    wss = websocket;
+    websocket.on('data',(obj) => {
+      websocket.send(str,text)
+    })
   })
+
   var flag = false
   var client = net.connect({ port:port })
   shakeHand(client,port)
@@ -104,7 +111,7 @@ function sendText(t,text) {
         t.fail()
       }
       t.end()
-      ws.end()
+      wss.end()
     }
   })
 }
@@ -117,12 +124,16 @@ test.serial.cb('Server send text', (t) => {
   sendText(t,'text')
 })
 
-function sendBinary(t) {
-  var bin = new Buffer([0x82,0x80,0x82,0x80])
+function sendBinary(t,bin) {
   var ws = WebSocket(server)
-  ws.on('data',(obj) => {
-    ws.send(bin,'binary')
+  var wss
+  ws.on('connect',(websocket) => {
+    wss = websocket
+    websocket.on('data',(obj) => {
+      websocket.send(bin,'binary')
+    })
   })
+
   var flag = false
   var client = net.connect({ port:port })
   shakeHand(client,port)
@@ -138,13 +149,37 @@ function sendBinary(t) {
         t.fail()
       }
       t.end()
-      ws.end()
+      wss.end()
     }
   })
 }
 
 test.serial.cb('Server send binary', (t) => {
-  sendBinary(t)
+  var bin = new Buffer([0x82,0x80,0x82,0x80])  
+  sendBinary(t,bin)
+})
+
+function sendError(t,data) {
+  var ws = WebSocket(server)
+  ws.on('connect',(websocket) => {
+    try {
+      websocket.send(data,3)  
+      t.fail()  
+    } catch(e) {
+      t.pass()
+    }
+    t.end()
+    websocket.end()
+  })
+
+  var flag = false
+  var client = net.connect({ port:port })
+  shakeHand(client,port)
+}
+
+test.serial.cb('Server send error type', (t) => {
+  var bin = new Buffer([0x83,0x80,0x82,0x80])  
+  sendError(t,bin)
 })
 
 test.serial.cb('Server recv/send 2 bytes len data', (t) => {
@@ -155,14 +190,18 @@ test.serial.cb('Server recv/send 2 bytes len data', (t) => {
   var tmp = new Buffer(len)
   var ws = WebSocket(server)
   var send = false
-  ws.on('data',(obj) => {
-    if (obj.buffer.length === len) {
-      t.pass()
-    } else {
-      t.fail()
-    }
-    ws.send(obj.buffer,'binary')
-    send = true
+  var wss
+  ws.on('connect',(websocket) => {
+    wss = websocket
+    websocket.on('data',(obj) => {
+      if (obj.buffer.length === len) {
+        t.pass()
+      } else {
+        t.fail()
+      }
+      websocket.send(obj.buffer,'binary')
+      send = true
+    })
   })
   var client = net.connect({ port:port })
   shakeHand(client,port)
@@ -170,7 +209,7 @@ test.serial.cb('Server recv/send 2 bytes len data', (t) => {
     if (send) {
       t.pass()
       t.end()
-      ws.end()
+      wss.end()
       return
     }
     var bigData = new Buffer([0x82,0xfe,...buf,0xc3,0x20,0x44,0xc9])
@@ -189,15 +228,20 @@ test.serial.cb('Server recv/send 8 bytes len data', (t) => {
     enablePing:false
   })
   var send = false
-  ws.on('data',(obj) => {
-    if (obj.buffer.length === len) {
-      t.pass()
-    } else {
-      t.fail()
-    }
-    ws.send(obj.buffer,'binary')
-    send = true
+  var wss
+  ws.on('connect',(websocket) => {
+    wss = websocket
+    websocket.on('data',(obj) => {
+      if (obj.buffer.length === len) {
+        t.pass()
+      } else {
+        t.fail()
+      }
+      websocket.send(obj.buffer,'binary')
+      send = true
+    })
   })
+  
   var client = net.connect({ port:port })
   shakeHand(client,port)
   client.once('data',function(data) {
@@ -217,7 +261,7 @@ test.serial.cb('Server recv/send 8 bytes len data', (t) => {
       if (d.length === (payloadlen+10)) {
         t.pass()
         t.end()
-        ws.end()
+        wss.end()
       }
     }
   })
@@ -231,14 +275,16 @@ test.serial.cb('Server continuous Frames', (t) => {
   var ws = WebSocket(server,{
     enablePing:false
   })
-  ws.on('data',(obj) => {
-    if (obj.buffer.length === len * 3) {
-      t.pass()
-    } else {
-      t.fail()
-    }
-    t.end()
-    ws.end()
+  ws.on('connect',(websocket) => {
+    websocket.on('data',(obj) => {
+      if (obj.buffer.length === len * 3) {
+        t.pass()
+      } else {
+        t.fail()
+      }
+      t.end()
+      websocket.end()
+    })
   })
   var client = net.connect({ port:port })
   shakeHand(client,port)

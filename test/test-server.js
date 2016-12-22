@@ -1,5 +1,6 @@
 import test from 'ava';
 import WebSocket from '..';
+import WebSocketlib from '../websocket';
 import http from 'http';
 import net from 'net';
 
@@ -99,6 +100,10 @@ test.serial.cb('Server req header sec-websocket-protocol', (t) => {
 
 test.serial.cb('Server req header Sec-WebSocket-Accept', (t) => {
   var ws = WebSocket(server);
+  var wss
+  ws.on('connect',(s) => {
+    wss = s
+  })
   var client = net.connect({ port:port })
 
   client.write(
@@ -123,22 +128,26 @@ test.serial.cb('Server req header Sec-WebSocket-Accept', (t) => {
       t.fail();
     }
     t.end();
-    ws.end();
+    wss.end();
   })
 
 })
 
 test.serial.cb('Server recv string', (t) => {
   var ws = WebSocket(server);
-  ws.once('data',(obj) => {
-    ws.end()
-    if (obj.buffer.toString() === 'hello world') {
-      t.pass()
-    } else {
-      t.fail()
-    }
-    t.end()
-  });
+  var wss
+  ws.on('connect',(s) => {
+    wss = s
+    s.once('data',(obj) => {
+      wss.end()
+      if (obj.buffer.toString() === 'hello world') {
+        t.pass()
+      } else {
+        t.fail()
+      }
+      t.end()
+    });
+  })
 
   var client = net.connect({ port:port })
 
@@ -151,15 +160,17 @@ test.serial.cb('Server recv string', (t) => {
 
 test.serial.cb('Server recv binary', (t) => {
   var ws = WebSocket(server);
-  ws.once('data',(obj) => {
-    ws.end()
-    if (obj.type === 'binary') {
-      t.pass()
-    } else {
-      t.fail()
-    }
-    t.end()
-  });
+  ws.on('connect',(s) => {
+    s.once('data',(obj) => {
+      s.end()
+      if (obj.type === 'binary') {
+        t.pass()
+      } else {
+        t.fail()
+      }
+      t.end()
+    });
+  })
 
   var client = net.connect({ port:port })
 
@@ -173,7 +184,7 @@ test.serial.cb('Server recv binary', (t) => {
 test.serial.cb('Server onUpgrade socket', (t) => {
   var ws = null;
   server.on('upgrade',function (req,socket,head) {
-    ws = WebSocket(socket)
+    ws = WebSocketlib(socket)
     if (ws.socket instanceof net.Socket) {
       t.pass()
     } else {
@@ -187,23 +198,26 @@ test.serial.cb('Server onUpgrade socket', (t) => {
 })
 
 test.serial.cb('Server onUpgrade server', (t) => {
-  t.plan(2)
   var ws = WebSocket(server)
+  var wss;
+  ws.on("connect",(websocket) => {
+    wss = websocket
+  })
 
-  if (ws.socket instanceof http.Server) {
+  if (ws.server instanceof http.Server) {
     t.pass()
   } else {
     t.fail()
   }
 
   server.on('upgrade',() => {
-    if (ws.socket instanceof net.Socket) {
+    if (wss.socket instanceof net.Socket) {
       t.pass()
     } else {
       t.fail()
     }
     t.end()
-    ws.end()
+    wss.end()
   })
 
   var client = net.connect({ port:port })
@@ -213,7 +227,7 @@ test.serial.cb('Server onUpgrade server', (t) => {
 test.serial.cb('Server shakeHand', (t) => {
   var ws = null;
   server.on('upgrade',function (req,socket,head) {
-    ws = WebSocket(socket).shakeHand(req)
+    ws = WebSocketlib(socket).shakeHand(req)
   })
   var client = net.connect({ port:port })
   shakeHand(client,port)
@@ -234,7 +248,7 @@ test.serial.cb('Server shakeHand', (t) => {
 test.serial.cb('Server receiveFrame', (t) => {
   var ws = null;
   server.on('upgrade',function (req,socket,head) {
-    ws = WebSocket(socket)
+    ws = WebSocketlib(socket)
       .shakeHand(req)
       .receiveFrame()
       .on('data',(obj) => {

@@ -41,14 +41,16 @@ test.afterEach.cb((t) => {
 test.serial.cb('Server decodeFrame RSV ', (t) => {
   var rsvError = new Buffer([0x30,0x00])
   var ws = WebSocket(server)
-  ws.once('error',(error) => {
-    if (error.message === 'RSV1/2/3 must be 0') {
-      t.pass()
-    } else {
-      t.fail()
-    }
-    t.end()
-    ws.end()
+  ws.on('connect',(websocket) => {
+    websocket.once('error',(error) => {
+      if (error.message === 'RSV1/2/3 must be 0') {
+        t.pass()
+      } else {
+        t.fail()
+      }
+      t.end()
+      websocket.end()
+    })
   })
   var client = net.connect({ port:port })
   shakeHand(client,port)
@@ -60,15 +62,18 @@ test.serial.cb('Server decodeFrame RSV ', (t) => {
 test.serial.cb('Server decodeFrame control frame FIN ', (t) => {
   var ws = WebSocket(server)
   var finError = new Buffer([0x08,0x82])
-  ws.once('error',(error) => {
-    if (error.message === 'Control frames must not be fragmented') {
-      t.pass()
-    } else {
-      t.fail()
-    }
-    t.end()
-    ws.end()
+  ws.on('connect',(websocket) => {
+    websocket.once('error',(error) => {
+      if (error.message === 'Control frames must not be fragmented') {
+        t.pass()
+      } else {
+        t.fail()
+      }
+      t.end()
+      websocket.end()
+    })
   })
+
   var client = net.connect({ port:port })
   shakeHand(client,port)
   client.once('data',function(data) {
@@ -79,15 +84,18 @@ test.serial.cb('Server decodeFrame control frame FIN ', (t) => {
 test.serial.cb('Server decodeFrame control frame payLoadLen ', (t) => {
   var ws = WebSocket(server)
   var finError = new Buffer([0x88,0x7f])
-  ws.once('error',(error) => {
-    if (error.message === 'Close socket frame payload legnth must be less than 125') {
-      t.pass()
-    } else {
-      t.fail()
-    }
-    t.end()
-    ws.end()
+  ws.on('connect',(websocket) => {
+    websocket.once('error',(error) => {
+      if (error.message === 'Close socket frame payload legnth must be less than 125') {
+        t.pass()
+      } else {
+        t.fail()
+      }
+      t.end()
+      websocket.end()
+    })
   })
+  
   var client = net.connect({ port:port })
   shakeHand(client,port)
   client.once('data',function(data) {
@@ -98,15 +106,18 @@ test.serial.cb('Server decodeFrame control frame payLoadLen ', (t) => {
 test.serial.cb('Server decodeFrame mask key ', (t) => {
   var ws = WebSocket(server)
   var finError = new Buffer([0x88,0x0f])
-  ws.once('error',(error) => {
-    if (error.message === 'Miss mask key') {
-      t.pass()
-    } else {
-      t.fail()
-    }
-    t.end()
-    ws.end()
+  ws.on('connect',(websocket) => {
+    websocket.once('error',(error) => {
+      if (error.message === 'Miss mask key') {
+        t.pass()
+      } else {
+        t.fail()
+      }
+      t.end()
+      websocket.end()
+    })
   })
+  ws
   var client = net.connect({ port:port })
   shakeHand(client,port)
   client.once('data',function(data) {

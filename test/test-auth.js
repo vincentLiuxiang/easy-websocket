@@ -59,6 +59,10 @@ test.serial.cb('Server check auth', (t) => {
 test.serial.cb('Server check auth', (t) => {
   var ws = WebSocket(server);
   ws.auth = authSucess;
+  var websocket;  
+  ws.on('connect',(s) => {
+    websocket = s;
+  })
   var client = net.connect({ port:port })
   shakeHand(client,port)
 
@@ -72,7 +76,7 @@ test.serial.cb('Server check auth', (t) => {
       t.fail()
     }
     t.end()
-    ws.end()
+    websocket.end()
   })
 })
 
