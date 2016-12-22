@@ -1,10 +1,9 @@
 var app       = require('connect')();
 var http      = require('http');
 var fs        = require('fs');
-var websocket = require('../index');
+var websocket = require('..');
 
 app.use(function (req,res,next) {
-  console.log(req.url);
   next();
 });
 
@@ -19,12 +18,12 @@ app.use(function (req,res,next) {
 
 var server = http.Server(app);
 
-var ws = websocket(server)
-  .on('data',function (obj) {
-    console.log(obj.type,obj.buffer.length);
+websocket(server)
+.on('connect',(ws) => {
+  ws.on('data',(obj) => {
+    console.log(obj.type);
+    ws.send("hello world");
   })
-  .on('pong',function (text) {
-    console.log('pong ...',text);
-  })
+})
 
 server.listen(3000);
