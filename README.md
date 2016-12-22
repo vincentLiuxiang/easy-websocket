@@ -52,13 +52,13 @@ var http      = require('http');
 var fs        = require('fs');
 var websocket = require('easy-websocket');
 
-var app = http.createServer(function (req,res) {
+var server = http.createServer(function (req,res) {
   fs.readFile('./index.html',function (err,data) {
     res.end(data)
   })
 });
 
-websocket(app)
+websocket(server)
   .on('connect',(ws) => {
     ws.on('data',(obj) => {
       console.log(obj.type);
@@ -66,7 +66,7 @@ websocket(app)
     })
   })
 
-app.listen(3000);
+server.listen(3000);
 ```
 
 * `express`  [path]/example/express-example.js
@@ -90,20 +90,20 @@ var server = http.Server(app);
 
 // websocket
 server.on('upgrade',function (req,socket,head) {
-var ws = websocketlib(socket)
-  .shakeHand(req)
-  .receiveFrame()
-  .on('data',(obj) => {
-    console.log(obj.type,obj.buffer.length);
-    switch(obj.type) {
-      case 'string':
-        ws.send(obj.buffer.toString());
-      break;
-      case 'binary':
-        ws.send(obj.buffer,'binary');
-      break;
-    }
-  })
+  var ws = websocketlib(socket)
+    .shakeHand(req)
+    .receiveFrame()
+    .on('data',(obj) => {
+      console.log(obj.type,obj.buffer.length);
+      switch(obj.type) {
+        case 'string':
+          ws.send(obj.buffer.toString());
+        break;
+        case 'binary':
+          ws.send(obj.buffer,'binary');
+        break;
+      }
+    })
 })
 
 server.listen(3000);
@@ -319,9 +319,9 @@ wsServer.auth = function (req) {
 
 #### event
 
-* connect emit when shakehand success, the only input param of callback `ws`is an instance of  websocketlib
+* connect: emit when shakehand success. The only input param of callback `ws`is an instance of  websocketlib
 
-  ```
+  ```javascript
   wsServer.on('connect',(ws) => {
     ws.on('data',(obj) => {
       console.log(obj.type,obj.buffer.length);
