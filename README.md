@@ -45,35 +45,40 @@ var websocket = require('easy-websocket');
 
 ## server
 
-* `http` [path]/example/connect-example.js
+* `http` [path]/example/http-example.js
 
-```javascripts
+```javascript
 var http      = require('http');
 var fs        = require('fs');
-var websocket = require('..');
+var websocket = require('easy-websocket');
+
 var app = http.createServer(function (req,res) {
   fs.readFile('./index.html',function (err,data) {
     res.end(data)
   })
 });
-var ws = websocket(app)
-  .on('data',function (obj) {
-    console.log(obj.type,obj.buffer.length);
+
+websocket(app)
+  .on('connect',(ws) => {
+    ws.on('data',(obj) => {
+      console.log(obj.type);
+      ws.send("hello world");
+    })
   })
-  .on('pong',function (data) {
-    console.log('pong ...',data);
-  })
+
+app.listen(3000);
 ```
 
-* `connect`  [path]/example/connect-example.js
+* `express`  [path]/example/express-example.js
+* only require websocket protocol
 
-```javascripts
-var app       = require('connect')();
+```javascript
+var app       = require('express')();
 var http      = require('http');
 var fs        = require('fs');
-var websocket = require('..');
 
-// app.use(...)
+// only websocket protocal
+var websocketlib = require('easy-websocket/websocket');
 
 app.use(function (req,res,next) {
   fs.readFile('./index.html',function (err,data) {
@@ -82,14 +87,26 @@ app.use(function (req,res,next) {
 });
 
 var server = http.Server(app);
-var ws = websocket(server);
-ws.on('data',(obj) => {
-  console.log(obj.type,obj.buffer.length);
-  ws.send('hello world');
-});
+
+// websocket
+server.on('upgrade',function (req,socket,head) {
+var ws = websocketlib(socket)
+  .shakeHand(req)
+  .receiveFrame()
+  .on('data',(obj) => {
+    console.log(obj.type,obj.buffer.length);
+    switch(obj.type) {
+      case 'string':
+        ws.send(obj.buffer.toString());
+      break;
+      case 'binary':
+        ws.send(obj.buffer,'binary');
+      break;
+    }
+  })
+})
 
 server.listen(3000);
-
 ```
 ## Check auth 
 
@@ -101,7 +118,7 @@ By default,
 * if defaultAuth(req) returns a false,  server responds with shakehand data.
 * if defaultAuth(req) returns a non-false value,  server will end the socket with the value, and reject the shakehand request.
 
-```javascripts
+```javascript
 WebSocket.prototype.defaultAuth = function (req) {
   if (!req.headers.origin) {
     return 'origin header is not exist';
@@ -134,12 +151,13 @@ easy-websocket provides a custom way to check auth.
 
 eg.
 
-```javascripts
+```javascript
 var app       = require('connect')();
 var http      = require('http');
 var fs        = require('fs');
-var websocket = require('..');
-var ws = websocket(server);
+var server    = http.Server(app);
+var websocket = require('easy-websocket');
+var wsServer  = websocket(server);
 app.use(function (req,res,next) {
   fs.readFile('./index.html',function (err,data) {
     res.end(data);
@@ -147,62 +165,48 @@ app.use(function (req,res,next) {
 });
 
 // check auth
-ws.auth = function (req) {
-  return ws.defaultAuth(req) || checkCookie(req);
+wsServer.auth = function (req) {
+  return checkCookie(req);
 }
 
 function checkCookie(req) {
   // return '403 forbidden';
-  // return false;
+  return false;
 }
 
-ws.on('data',(obj) => {
-  console.log(obj.type,obj.buffer.length);
-  ws.send('hello world');
-});
+wsServer.on('connect',(ws) => {
+  ws.on('data',(obj) => {
+    console.log(obj.type,obj.buffer.length);
+    ws.send('hello world');
+  });
+})
+
+
 
 var server = http.Server(app).listen(3000);
-
 ```
 
 
 ## api
 
-#### 1, websocket
-##### 1.1 new websocket(server[,config]);
-server: instance of http.Server;
-
-```javascripts
-var websocket = require('easy-websocket');
-var server = http.Server();
-//var server = http.createServer();
-var ws = new websocket(server);
-ws.on('data',() => {
-})
-//...
-```
-config: optional , json object;
-defalut config:
+### 1 websocket.js: protocol
 
 ```
-{
-  pingInterval:10000,
-  enablePing:true,
-  enablePong:true
-}
+var websocketlib = require('easy-websocket/websocket');
 ```
-#### 1.2 new websocket(socket[,config]);
-* socket.
-* config: refer to 1.1.
 
-```javascripts
-var websocket = require('easy-websocket');
+#### 1.1  websocketlib(socket[,config]);
+
+socket: instance of net.Socket;
+
+```javascript
+var websocketlib = require('easy-websocket/websocket');
 server.on('upgrade',function (req,socket,head) {
 
   // check req auth
   // ...
   
-  var ws = websocket(socket)
+  var ws = websocketlib(socket)
     .shakeHand(req)
     .receiveFrame()
     .on('data',function(obj){
@@ -218,45 +222,115 @@ server.on('upgrade',function (req,socket,head) {
     });
 })
 ```
-#### 2, shakeHand(req);
+config: optional , json object;
+defalut config:
+
+```javascript
+{
+  pingInterval:10000,
+  enablePing:true,
+  enablePong:true
+}
+```
+#### 1.2, defaultAuth(req)
+
+default check auth method;
+
+#### 1.3, auth(req)
+
+an interface to user, if auth is set, check auth via auth(req);
+
+#### 1.4, shakeHand(req);
+
 req: http request from client;
 
-#### 3, receiveFrame();
+#### 1.5, receiveFrame();
 receive Frame from client;
 
-#### 4, startPing();
+#### 1.6, startPing();
 create a ping frame from server to client. By default , this function will call ping([data]) every 10s to ensure this socket connection is alive;
 
 if config.enablePing is true and you never call clearPing() ,it means you should not call this function;
 
-#### 5, clearPing();
+#### 1.7, clearPing();
 stop ping ;
 
-#### 6, ping([data]);
+#### 1.8, ping([data]);
 only create ping frame one time;
 data: optinal, it can be a string or buffers
 
-#### 6, pong([data]);
+#### 1.9, pong([data]);
 respone for ping which come from client;
 
-#### 7, send(data[,opcode]);
+#### 1.10, send(data[,opcode]);
 data : a string or buffers
 opcode : optinal, the default value is 'text'. if data are buffers , this value must set 'binary'
 
-#### 8, end();
+#### 1.11, end();
 close socket;
 
-## event 
-* 'data' : when receive data from client
-* 'error' : when some error occur
-* 'ping' : when server accept ping frame
-* 'pong' : when server accept pong frame
-* 'close' : when close socket
+#### event 
+* 'connect' emit when shakehand success
+* 'data' : emit when receive data from client
+* 'error' : emit when some error occur
+* 'ping' : emit when server accept ping frame
+* 'pong' : emit when server accept pong frame
+* 'close' : emit when close socket
 
 
 
 
+### index.js: websocket server
 
+```javascript
+var websocket = require('easy-websocket');
+...
+var wsServer  = websocket(server,{...});
+wsServer.on('connect',(ws) => {
+  ws.on('data',(obj) => {
+    console.log(obj.type,obj.buffer.length);
+    ws.send('hello world');
+  });
+})
+```
+
+
+
+#### 2.1, websocket(server[,config]);
+
+server instance of http.Server;
+
+config refer to 1.1
+
+
+
+#### 2.2, auth(req);
+
+An interface to user, wesocketlib.auth will reference to this auth, if we set this auth, when calls auth(req) in wesocketlib,  it actually calls this auth. 
+
+```javascript
+// check auth
+wsServer.auth = function (req) {
+  return checkCookie(req);
+}
+```
+
+
+
+#### event
+
+* connect emit when shakehand success, the only input param of callback `ws`is an instance of  websocketlib
+
+  ```
+  wsServer.on('connect',(ws) => {
+    ws.on('data',(obj) => {
+      console.log(obj.type,obj.buffer.length);
+      ws.send('hello world');
+    });
+  })
+  ```
+
+  ​
 
 
 
