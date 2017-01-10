@@ -75,7 +75,7 @@ WebSocket.prototype.shakeHand = function (req) {
 
 WebSocket.prototype.receiveFrame = function () {
   if (this.socket.readyState !== 'open') {
-    return ;
+    return this;
   }
   var self = this;
   this.socket.on('data',function (buf) {
